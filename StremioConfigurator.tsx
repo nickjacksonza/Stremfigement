@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
 import { Copy, Download, Key, Puzzle, Filter, ArrowUpDown, Layout, Settings, X, GripVertical } from 'lucide-react';
 
+// Public AIOStreams instance the generated manifest URL points at.
+// Swap this if you self-host your own AIOStreams instance instead.
+const AIOSTREAMS_BASE_URL = 'https://aiostreams.elfhosted.com';
+
 export default function StremioConfigurator() {
   const [activeTab, setActiveTab] = useState('services');
   
@@ -114,6 +118,20 @@ export default function StremioConfigurator() {
 
   const generateConfig = () => {
     return { services, addons, filters, sorting, formatter, misc };
+  };
+
+  const getManifestUrl = () => {
+    return `${AIOSTREAMS_BASE_URL}/${btoa(JSON.stringify(generateConfig()))}/manifest.json`;
+  };
+
+  const getStremioDeepLink = () => {
+    // Stremio recognizes stremio:// links pointing at a manifest.json to
+    // trigger the "Install Addon" flow directly in the app.
+    return getManifestUrl().replace(/^https?:\/\//, 'stremio://');
+  };
+
+  const copyManifestUrl = () => {
+    navigator.clipboard.writeText(getManifestUrl());
   };
 
   const copyJSON = () => {
@@ -441,12 +459,27 @@ export default function StremioConfigurator() {
 
                 <div>
                   <h2 className="text-xl font-bold text-white mb-4">Installation URL</h2>
-                  <input
-                    type="text"
-                    value={`https://your-addon.com/${btoa(JSON.stringify(generateConfig()))}/manifest.json`}
-                    readOnly
-                    className="w-full px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 font-mono text-sm"
-                  />
+                  <p className="text-sm text-gray-400 mb-2">
+                    Served by {AIOSTREAMS_BASE_URL.replace('https://', '')} &mdash; edit AIOSTREAMS_BASE_URL in the source to point at your own instance.
+                  </p>
+                  <div className="flex gap-2 mb-3">
+                    <input
+                      type="text"
+                      value={getManifestUrl()}
+                      readOnly
+                      className="flex-1 px-4 py-2 bg-gray-700 text-white rounded-lg border border-gray-600 font-mono text-sm"
+                    />
+                    <button onClick={copyManifestUrl} className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg">
+                      <Copy className="w-4 h-4" />
+                      Copy
+                    </button>
+                  </div>
+                  <a
+                    href={getStremioDeepLink()}
+                    className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg"
+                  >
+                    Install in Stremio
+                  </a>
                 </div>
               </div>
             )}
